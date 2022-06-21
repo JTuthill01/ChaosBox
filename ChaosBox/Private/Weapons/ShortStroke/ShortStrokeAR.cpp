@@ -15,6 +15,12 @@ void AShortStrokeAR::WeaponFire()
 
 	FireTransform.GetRotation() = FireQuat;
 
+	if (IsValid(WeaponAnimInstance))
+	{
+		WeaponFireTimer = WeaponAnimInstance->Montage_Play(WeaponFireMontage);
+
+		GetWorldTimerManager().SetTimer(WeaponFireTimerHandle, this, &AShortStrokeAR::ResetCanFire, WeaponFireTimer, false);
+	}
 }
 
 void AShortStrokeAR::WeaponReload()
@@ -27,4 +33,7 @@ void AShortStrokeAR::ResetIsReloading()
 
 void AShortStrokeAR::ResetCanFire()
 {
+	bCanFire = !bCanFire;
+
+	GetWorldTimerManager().ClearTimer(WeaponFireTimerHandle);
 }

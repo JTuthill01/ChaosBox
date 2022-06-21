@@ -24,11 +24,14 @@ struct FWeaponDataStats : public FTableRowBase
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
     int32 LowAmmo;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-    int32 DamageAmount;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	int32 CrosshairIndex;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	int32 WeaponIndex;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-    int32 CrosshairIndex;
+    float DamageAmount;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
     float CriciticalHitChance;

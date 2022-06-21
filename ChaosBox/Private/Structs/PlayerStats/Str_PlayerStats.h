@@ -9,10 +9,10 @@ struct FPlayerStats
 
     public:
         UPROPERTY(EditAnywhere, BlueprintReadWrite)
-        int32 CurrentHealth;
+        float CurrentHealth;
 
         UPROPERTY(EditAnywhere, BlueprintReadWrite)
-        int32 MaxHealth;
+        float MaxHealth;
 
         UPROPERTY(EditAnywhere, BlueprintReadWrite)
         int32 CurrentArmor;

@@ -5,6 +5,7 @@
 #include "InputActionValue.h"
 #include <Interfaces/Player/PlayerInterface.h>
 #include <Structs/PlayerStats/Str_PlayerStats.h>
+#include <Weapons/WeaponEnums/WeaponEnums.h>
 #include "PlayerCharacter.generated.h"
 
 class UInputAction;
@@ -21,6 +22,7 @@ public:
 
 	FORCEINLINE class UOpenWidget* GetDoorWidget() { return DoorOpenWidget; }
 	FORCEINLINE class UCameraComponent* GetPlayerCamera() { return Camera; }
+	FORCEINLINE class AWeaponBase* GetCurrentWeapon() { return CurrentWeapon; }
 	FORCEINLINE USkeletalMeshComponent* GetPlayerArms() { return Arms; }
 
 protected:
@@ -91,7 +93,7 @@ private:
 
 	void CreateUIWidgets();
 
-	void InitializePlayerStats();
+	void SpawnWeapon();
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -100,18 +102,31 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = SK_Mesh, meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* Arms;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Montages, meta = (AllowPrivateAccess = "true"))
+	TArray< TObjectPtr<class UAnimMontage> > WeaponFireMontage;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = UI, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> DoorWidget;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Stats, meta = (AllowPrivateAccess = "true"))
-	FPlayerStats Stats;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class AWeaponBase> CurrentWeapon;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class AWeaponBase> WeaponToSpawn;
 
 private:
 	UPROPERTY()
 	class UOpenWidget* DoorOpenWidget;
 
+	UPROPERTY()
+	TObjectPtr<UAnimInstance> PlayerAnimInstance;
+
 private:
 	float ScanTimer;
+
+	int32 CurrentWeaponIndex;
+
+	EHasWeapon HasWeapon;
 
 	FTimerHandle ScanTimerHandle;
 };

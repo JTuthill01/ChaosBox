@@ -6,9 +6,10 @@
 #include <Interfaces/Interact/InteractInterface.h>
 #include <Widgets/OpenWidget/OpenWidget.h>
 #include <Kismet/GameplayStatics.h>
+#include <Weapons/WeaponBase/WeaponBase.h>
 
 // Sets default values
-APlayerCharacter::APlayerCharacter() : ScanTimer(0.25F)
+APlayerCharacter::APlayerCharacter() : ScanTimer(0.25F), CurrentWeaponIndex(0), HasWeapon(EHasWeapon::EHW_NoWeapon)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -26,12 +27,14 @@ APlayerCharacter::APlayerCharacter() : ScanTimer(0.25F)
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	InitializePlayerStats();
 	
 	GetWorldTimerManager().SetTimer(ScanTimerHandle, this, &APlayerCharacter::InteractableScanner, ScanTimer, true);
 
 	CreateUIWidgets();
+
+	SpawnWeapon();
+
+	PlayerAnimInstance = Arms->GetAnimInstance();
 }
 
 void APlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -63,11 +66,11 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			PlayerEnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 		}
 
-		if (WeaponFireAction)
+		/*if (WeaponFireAction)
 		{
 			PlayerEnhancedInputComponent->BindAction(WeaponFireAction, ETriggerEvent::Started, this, &APlayerCharacter::FirePressed);
 			PlayerEnhancedInputComponent->BindAction(WeaponFireAction, ETriggerEvent::Completed, this, &APlayerCharacter::FireReleased);
-		}
+		}*/
 
 		if (CrouchAction)
 			PlayerEnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &APlayerCharacter::CrouchPressed);
@@ -80,6 +83,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		if (InteractAction)
 			PlayerEnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Interact);
+
+		if (WeaponFireAction)
+			PlayerEnhancedInputComponent->BindAction(WeaponFireAction, ETriggerEvent::Triggered, this, &APlayerCharacter::FirePressed);
 
 		if (WeaponReloadAction)
 			PlayerEnhancedInputComponent->BindAction(WeaponReloadAction, ETriggerEvent::Started, this, &APlayerCharacter::Reload);
@@ -124,6 +130,28 @@ void APlayerCharacter::CrouchPressed()
 
 void APlayerCharacter::FirePressed()
 {
+	if (IsValid(CurrentWeapon))
+	{
+		switch (HasWeapon)
+		{
+		case EHasWeapon::EHW_NoWeapon:
+			break;
+
+		case EHasWeapon::EHW_HasWeapon:
+
+			if (IsValid(CurrentWeapon) && IsValid(PlayerAnimInstance))
+			{
+				CurrentWeapon->WeaponFire();
+
+				PlayerAnimInstance->Montage_Play(WeaponFireMontage[CurrentWeaponIndex]);
+			}
+
+			break;
+
+		default:
+			break;
+		}
+	}
 }
 
 void APlayerCharacter::FireReleased()
@@ -145,6 +173,7 @@ void APlayerCharacter::Interact()
 	TArray<AActor*> ActorsToIgnore;
 
 	ActorsToIgnore.Add(this);
+	ActorsToIgnore.Add(CurrentWeapon);
 	TraceObjects.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
 	TraceObjects.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
 
@@ -171,6 +200,7 @@ void APlayerCharacter::InteractableScanner()
 	TArray<AActor*> ActorsToIgnore;
 
 	ActorsToIgnore.Add(this);
+	ActorsToIgnore.Add(CurrentWeapon);
 	TraceObjects.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
 	TraceObjects.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
 
@@ -194,13 +224,27 @@ void APlayerCharacter::CreateUIWidgets()
 	DoorOpenWidget = CreateWidget<UOpenWidget>(UGameplayStatics::GetPlayerController(GetWorld(), 0), DoorWidget);
 }
 
-void APlayerCharacter::InitializePlayerStats()
+void APlayerCharacter::SpawnWeapon()
 {
-	Stats.MaxHealth = 100;
-	Stats.CurrentHealth = Stats.MaxHealth;
+	FActorSpawnParameters Params;
+	Params.Owner = this;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	Stats.MaxArmor = 100;
-	Stats.CurrentArmor = Stats.MaxArmor;
+	FVector Location = Arms->GetComponentLocation();
+	FRotator Rotation = Arms->GetComponentRotation();
+
+	CurrentWeapon = GetWorld()->SpawnActor<AWeaponBase>(WeaponToSpawn, Location, Rotation, Params);
+
+	if (IsValid(CurrentWeapon))
+	{
+		CurrentWeapon->AttachToComponent(Arms, FAttachmentTransformRules::SnapToTargetIncludingScale, CurrentWeapon->GetSocketName());
+
+		HasWeapon = EHasWeapon::EHW_HasWeapon;
+
+		CurrentWeapon->SetWeaponStats(CurrentWeapon->GetCurrentWeaponEnumName());
+
+		CurrentWeaponIndex = CurrentWeapon->GetWeaponIndex();
+	}
 }
 
 APlayerCharacter* APlayerCharacter::GetPlayerRef_Implementation() { return this; }

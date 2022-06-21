@@ -4,9 +4,11 @@
 #include <Player/PlayerCharacter.h>
 #include <Interfaces/Player/PlayerInterface.h>
 #include <Kismet/KismetMathLibrary.h>
+#include <Engine/DataTable.h>
+#include <Structs/WeaponData/Str_WeaponStats.h>
 
 // Sets default values
-AWeaponBase::AWeaponBase() : SocketName(NAME_None), bCanFire(true), bCanReload(true), EjectQuat(FQuat(0.F))
+AWeaponBase::AWeaponBase() : SocketName(NAME_None), bCanFire(true), bCanReload(true), bIsReloading(false), EjectQuat(FQuat(0.F)), FireQuat(FQuat(0.F)), WeaponFireTimer(0.F)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -28,12 +30,6 @@ void AWeaponBase::BeginPlay()
 
 	PlayerRef = IPlayerInterface::Execute_GetPlayerRef(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 }
-
-void AWeaponBase::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);
-}
-
 
 // Called every frame
 void AWeaponBase::Tick(float DeltaTime)
@@ -84,6 +80,108 @@ void AWeaponBase::BulletTrace(FHitResult& HitResult, FTransform& ProjectileTrans
 	}
 }
 
+void AWeaponBase::SetWeaponStats(EWeaponName Name)
+{
+	FString WeaponDataTablePath(TEXT("DataTable'/Game/Blueprints/Weapons/DataTable/DT_WeaponStats.DT_WeaponStats'"));
+
+	TObjectPtr<UDataTable> WeaponDataTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *WeaponDataTablePath));
+
+	if (IsValid(WeaponDataTableObject))
+	{
+		TObjectPtr<FWeaponDataStats> WeaponRow = nullptr;
+
+		switch (Name)
+		{
+		case EWeaponName::EWN_TT33:
+			break;
+
+		case EWeaponName::EWN_AK47:
+			break;
+
+		case EWeaponName::EWN_AmericanShotgun:
+			break;
+
+		case EWeaponName::EWN_BelgianAR:
+			break;
+
+		case EWeaponName::EWN_GermanSMG:
+			break;
+
+		case EWeaponName::EWN_HandCannon:
+			break;
+
+		case EWeaponName::EWN_SKS:
+			break;
+
+		case EWeaponName::EWN_XM82:
+			break;
+
+		case EWeaponName::EWN_Bulldog:
+			break;
+
+		case EWeaponName::EWN_L86:
+			break;
+
+		case EWeaponName::EWN_AK74:
+			break;
+
+		case EWeaponName::EWN_M4A1:
+			break;
+
+		case EWeaponName::EWN_NavySMG:
+			break;
+
+		case EWeaponName::EWN_ItalianShotgun:
+			break;
+
+		case EWeaponName::EWN_SVD:
+			break;
+
+		case EWeaponName::EWN_ShortStrokeAR:
+
+			WeaponRow = WeaponDataTableObject->FindRow<FWeaponDataStats>(FName("ShortStrokeAR"), TEXT(""));
+
+			break;
+
+		default:
+			break;
+		}
+
+		if (WeaponRow)
+		{
+			CurrentMagTotal = WeaponRow->CurrentMagTotal;
+
+			MaxMagTotal = WeaponRow->MaxMagTotal;
+
+			CurrentTotalAmmo = WeaponRow->CurrentTotalAmmo;
+
+			MaxTotalAmmo = WeaponRow->MaxTotalAmmo;
+
+			LowAmmo = WeaponRow->LowAmmo;
+
+			CrosshairIndex = WeaponRow->CrosshairIndex;
+
+			WeaponIndex = WeaponRow->WeaponIndex;
+
+			DamageAmount = WeaponRow->DamageAmount;
+
+			CriciticalHitChance = WeaponRow->CriciticalHitChance;
+
+			DamageRadius = WeaponRow->DamageRadius;
+
+			NameOfWeapon = WeaponRow->WeaponName;
+
+			Icon = WeaponRow->Icon;
+		}
+
+		else
+			return;
+	}
+
+	else
+		return;
+}
+
 void AWeaponBase::StopFire()
 {
 
@@ -91,6 +189,7 @@ void AWeaponBase::StopFire()
 
 void AWeaponBase::WeaponFire()
 {
+	
 }
 
 void AWeaponBase::WeaponReload()
