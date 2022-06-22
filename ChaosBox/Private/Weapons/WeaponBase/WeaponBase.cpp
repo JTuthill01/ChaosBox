@@ -1,11 +1,13 @@
 #include "Weapons/WeaponBase/WeaponBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Camera/CameraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include <Player/PlayerCharacter.h>
 #include <Interfaces/Player/PlayerInterface.h>
 #include <Kismet/KismetMathLibrary.h>
 #include <Engine/DataTable.h>
 #include <Structs/WeaponData/Str_WeaponStats.h>
+#include <ImpactPhysicalMaterial/ImpactPhysicalMaterial.h>
 
 // Sets default values
 AWeaponBase::AWeaponBase() : SocketName(NAME_None), bCanFire(true), bCanReload(true), bIsReloading(false), EjectQuat(FQuat(0.F)), FireQuat(FQuat(0.F)), WeaponFireTimer(0.F)
@@ -35,7 +37,6 @@ void AWeaponBase::BeginPlay()
 void AWeaponBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void AWeaponBase::BulletTrace(FHitResult& HitResult, FTransform& ProjectileTransform)
@@ -80,6 +81,50 @@ void AWeaponBase::BulletTrace(FHitResult& HitResult, FTransform& ProjectileTrans
 	}
 }
 
+void AWeaponBase::CreateImpactFX(FHitResult HitResult)
+{
+	if (UImpactPhysicalMaterial* PhysMat = Cast<UImpactPhysicalMaterial>(HitResult.PhysMaterial))
+	{
+		if (USoundBase* ImpactSound = PhysMat->LineTraceImpactEffect.ImpactSound)
+		{
+			FVector Location = HitResult.Location;
+
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), ImpactSound, Location);
+		}
+
+		if (UNiagaraSystem* HitFX = Cast<UNiagaraSystem>(PhysMat->LineTraceImpactEffect.ImpactEffect))
+		{
+			FRotator Rotation = UKismetMathLibrary::MakeRotFromX(HitResult.Normal);
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitFX, HitResult.Location, Rotation);
+		}
+
+		else if (UParticleSystem* ParticleFX = Cast<UParticleSystem>(PhysMat->LineTraceImpactEffect.ImpactEffect))
+		{
+			FRotator Rotation = UKismetMathLibrary::MakeRotFromX(HitResult.Normal);
+			FVector Location = HitResult.Location;
+
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ParticleFX, Location, Rotation);
+		}
+
+		if (UMaterialInstance* ImpactDecal = PhysMat->LineTraceImpactEffect.ImpactDecal)
+		{
+			if (USceneComponent* HitComponent = HitResult.GetComponent())
+			{
+				FRotator Rotation = UKismetMathLibrary::MakeRotFromX(HitResult.Normal);
+
+				Rotation.Pitch += 180.0f;
+
+				FVector DecalSize = PhysMat->LineTraceImpactEffect.DecalSize;
+
+				float DecalLifetime = PhysMat->LineTraceImpactEffect.DecalLifeTime;
+
+				UGameplayStatics::SpawnDecalAttached(ImpactDecal, DecalSize, HitComponent, NAME_None,
+					HitResult.Location, Rotation, EAttachLocation::KeepWorldPosition, DecalLifetime);
+			}
+		}
+	}
+}
+
 void AWeaponBase::SetWeaponStats(EWeaponName Name)
 {
 	FString WeaponDataTablePath(TEXT("DataTable'/Game/Blueprints/Weapons/DataTable/DT_WeaponStats.DT_WeaponStats'"));
@@ -93,6 +138,9 @@ void AWeaponBase::SetWeaponStats(EWeaponName Name)
 		switch (Name)
 		{
 		case EWeaponName::EWN_TT33:
+
+			WeaponRow = WeaponDataTableObject->FindRow<FWeaponDataStats>(FName("TT33"), TEXT(""));
+
 			break;
 
 		case EWeaponName::EWN_AK47:
@@ -172,6 +220,14 @@ void AWeaponBase::SetWeaponStats(EWeaponName Name)
 			NameOfWeapon = WeaponRow->WeaponName;
 
 			Icon = WeaponRow->Icon;
+
+			FireType = WeaponRow->FireType;
+
+			FireFX = WeaponRow->FireFX;
+
+			AmmoEject = WeaponRow->AmmoEject;
+
+			FireSound = WeaponRow->FireSound;
 		}
 
 		else
@@ -189,10 +245,70 @@ void AWeaponBase::StopFire()
 
 void AWeaponBase::WeaponFire()
 {
+	bCanFire = false;
+	bCanReload = false;
+
+	CurrentMagTotal--;
+
+	if (CurrentMagTotal <= 0)
+		CurrentMagTotal = 0;
+
+	FTransform ImpactTransform;
+	FHitResult ImpactResult;
+
+	FActorSpawnParameters SpawnInfo;
+	SpawnInfo.Owner = this;
+	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	switch (FireType)
+	{
+	case EWeaponFireType::EWFT_None:
+		break;
+
+	case EWeaponFireType::EWFT_Hitscan:
+
+		NewTotalAmmo.Broadcast(CurrentMagTotal);
+
+		BulletTrace(ImpactResult, ImpactTransform);
+
+		if (ImpactResult.bBlockingHit)
+			CreateImpactFX(ImpactResult);
+
+		break;
+
+	case EWeaponFireType::EWFT_Projectile:
+		break;
+
+	case EWeaponFireType::EWFT_SpreadScan:
+		break;
+
+	default:
+		break;
+	}
 	
 }
 
 void AWeaponBase::WeaponReload()
 {
+	switch (FireType)
+	{
+	case EWeaponFireType::EWFT_None:
+		break;
+
+	case EWeaponFireType::EWFT_Hitscan:
+		break;
+
+	case EWeaponFireType::EWFT_Projectile:
+		break;
+
+	case EWeaponFireType::EWFT_SpreadScan:
+		break;
+
+	default:
+		break;
+	}
 }
 
+bool AWeaponBase::MagHasAmmo() { return CurrentMagTotal > 0; }
+
+bool AWeaponBase::HasAmmoForReload() { return CurrentTotalAmmo > 0; }

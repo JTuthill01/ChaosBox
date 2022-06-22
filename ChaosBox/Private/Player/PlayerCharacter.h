@@ -102,17 +102,20 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = SK_Mesh, meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* Arms;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class AWeaponBase> CurrentWeapon;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Montages, meta = (AllowPrivateAccess = "true"))
 	TArray< TObjectPtr<class UAnimMontage> > WeaponFireMontage;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = UI, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> DoorWidget;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class AWeaponBase> CurrentWeapon;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<class AWeaponBase> WeaponToSpawn;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Color, meta = (AllowPrivateAccess = "true"))
+	FLinearColor TestColor;
 
 private:
 	UPROPERTY()

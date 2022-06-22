@@ -5,18 +5,30 @@
 #include <Weapons/WeaponEnums/WeaponEnums.h>
 #include "WeaponBase.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateCurrentTotalAmmo, int32, TotalAmmoCount);
+
 UCLASS()
 class AWeaponBase : public AActor
 {
 	GENERATED_BODY()
 
 public:
-	//Getters
+#pragma region GETTERS
+
 	FORCEINLINE TObjectPtr<USkeletalMeshComponent> GetWeaponMesh() const { return WeaponMesh; }
+	FORCEINLINE TObjectPtr<class UTexture2D> GetIcon() { return Icon; }
 	FORCEINLINE FName GetSocketName() const { return SocketName; }
 	FORCEINLINE EWeaponName GetCurrentWeaponEnumName() { return WeaponName; }
+	FORCEINLINE EWeaponFireType GetFireType() { return FireType; }
+	FORCEINLINE FName GetWeaponName() { return NameOfWeapon; }
+	FORCEINLINE bool GetCanFire() { return bCanFire; }
 	FORCEINLINE int32 GetWeaponIndex() { return WeaponIndex; }
-	
+	FORCEINLINE int32 GetCurrentAmmo() { return CurrentMagTotal; }
+	FORCEINLINE int32 GetCurrentTotalAmmo() { return CurrentTotalAmmo; }
+	FORCEINLINE int32 GetLowAmmo() { return LowAmmo; }
+
+#pragma endregion
+
 public:	
 	// Sets default values for this actor's properties
 	AWeaponBase();
@@ -37,6 +49,14 @@ public:
 
 public:
 	void SetWeaponStats(EWeaponName Name);
+
+	bool MagHasAmmo();
+
+	bool HasAmmoForReload();
+
+public:
+	UPROPERTY(BlueprintAssignable)
+	FUpdateCurrentTotalAmmo NewTotalAmmo;
 
 protected:
 	// Called when the game starts or when spawned
@@ -105,6 +125,27 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Stats)
 	TObjectPtr<class UTexture2D> Icon;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Stats)
+	EWeaponFireType FireType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stats)
+	class UNiagaraSystem* AmmoEject;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stats)
+	class UNiagaraSystem* FireFX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stats)
+	class USoundBase* FireSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Sounds)
+	class USoundBase* RackSlideSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Sounds)
+	class USoundBase* MagOutSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Sounds)
+	class USoundBase* MagInSound;
+
 #pragma endregion
 
 protected:
@@ -124,4 +165,6 @@ protected:
 
 private:
 	void BulletTrace(FHitResult& HitResult, FTransform& ProjectileTransform);
+
+	void CreateImpactFX(FHitResult HitResult);
 };

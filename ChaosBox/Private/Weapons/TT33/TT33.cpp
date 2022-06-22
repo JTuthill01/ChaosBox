@@ -1,10 +1,10 @@
-#include "Weapons/ShortStroke/ShortStrokeAR.h"
-#include "Kismet/GameplayStatics.h"
+#include "Weapons/TT33/TT33.h"
 #include "NiagaraFunctionLibrary.h"
+#include <Kismet/GameplayStatics.h>
 
-AShortStrokeAR::AShortStrokeAR() = default;
+ATT33::ATT33() = default;
 
-void AShortStrokeAR::WeaponFire()
+void ATT33::WeaponFire()
 {
 	Super::WeaponFire();
 
@@ -16,28 +16,28 @@ void AShortStrokeAR::WeaponFire()
 
 	FireTransform.GetRotation() = FireQuat;
 
-	if (IsValid(WeaponAnimInstance))
+	if (WeaponAnimInstance)
 	{
-		WeaponFireTimer = WeaponAnimInstance->Montage_Play(WeaponFireMontage);
-
 		UGameplayStatics::SpawnSoundAttached(FireSound, WeaponMesh);
 
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), AmmoEject, EjectTransform.GetTranslation(), EjectQuat.Rotator());
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), FireFX, FireTransform.GetTranslation(), FireQuat.Rotator());
 
-		GetWorldTimerManager().SetTimer(WeaponFireTimerHandle, this, &AShortStrokeAR::ResetCanFire, WeaponFireTimer, false);
+		WeaponFireTimer = WeaponAnimInstance->Montage_Play(WeaponFireMontage);
+
+		GetWorldTimerManager().SetTimer(WeaponFireTimerHandle, this, &ATT33::ResetCanFire, WeaponFireTimer, false);
 	}
 }
 
-void AShortStrokeAR::WeaponReload()
+void ATT33::WeaponReload()
 {
 }
 
-void AShortStrokeAR::ResetIsReloading()
+void ATT33::StopFire()
 {
 }
 
-void AShortStrokeAR::ResetCanFire()
+void ATT33::ResetCanFire()
 {
 	bCanFire = true;
 	bCanReload = true;

@@ -9,7 +9,7 @@
 #include <Weapons/WeaponBase/WeaponBase.h>
 
 // Sets default values
-APlayerCharacter::APlayerCharacter() : ScanTimer(0.25F), CurrentWeaponIndex(0), HasWeapon(EHasWeapon::EHW_NoWeapon)
+APlayerCharacter::APlayerCharacter() : TestColor(FLinearColor(0.4, 0.F, 0.66F)), ScanTimer(0.25F), CurrentWeaponIndex(0), HasWeapon(EHasWeapon::EHW_NoWeapon)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -141,9 +141,15 @@ void APlayerCharacter::FirePressed()
 
 			if (IsValid(CurrentWeapon) && IsValid(PlayerAnimInstance))
 			{
-				CurrentWeapon->WeaponFire();
+				if (CurrentWeapon->MagHasAmmo())
+				{
+					if (CurrentWeapon->GetCanFire() && WeaponFireMontage.IsValidIndex(CurrentWeaponIndex))
+					{
+						CurrentWeapon->WeaponFire();
 
-				PlayerAnimInstance->Montage_Play(WeaponFireMontage[CurrentWeaponIndex]);
+						PlayerAnimInstance->Montage_Play(WeaponFireMontage[CurrentWeaponIndex]);
+					}
+				}
 			}
 
 			break;
@@ -160,6 +166,29 @@ void APlayerCharacter::FireReleased()
 
 void APlayerCharacter::Reload()
 {
+	if (IsValid(CurrentWeapon) && IsValid(PlayerAnimInstance))
+	{
+		if (CurrentWeapon->HasAmmoForReload())
+		{
+			switch (CurrentWeapon->GetFireType())
+			{
+			case EWeaponFireType::EWFT_None:
+				break;
+
+			case EWeaponFireType::EWFT_Hitscan:
+				break;
+
+			case EWeaponFireType::EWFT_Projectile:
+				break;
+
+			case EWeaponFireType::EWFT_SpreadScan:
+				break;
+
+			default:
+				break;
+			}
+		}
+	}
 }
 
 void APlayerCharacter::Interact()

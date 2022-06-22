@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Engine/DataTable.h"
+#include <Weapons/WeaponEnums/WeaponEnums.h>
 #include "Str_WeaponStats.generated.h"
 
 USTRUCT(BlueprintType)
@@ -44,4 +45,25 @@ struct FWeaponDataStats : public FTableRowBase
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<class UTexture2D> Icon;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+    EWeaponFireType FireType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class USoundBase* RackSlideSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class USoundBase* MagOutSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class USoundBase* MagInSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class USoundBase* FireSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UNiagaraSystem* AmmoEject;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UNiagaraSystem* FireFX;
 };
